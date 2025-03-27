@@ -1,44 +1,54 @@
 #include "hospital_management.hpp"
-#include <iostream>
 
 int main() {
     
-    Patient patient("Alex", 30);
-    Doctor doctor("Dr. Max", "Surgeon");
-    MedicalStaff staff("Mari", "Nurse");
+    std::shared_ptr<Patient> patient = std::make_shared<Patient>("John Doe", 30);
+    std::shared_ptr<Doctor> doctor = std::make_shared<Doctor>("Dr. Smith", "Cardiologist");
+    std::shared_ptr<MedicalStaff> staff = std::make_shared<MedicalStaff>("Nurse Mari", "Nurse");
+
     
-    Surgery surgery;
-    CheckUp checkUp;
+    std::shared_ptr<MedicalProcedure> surgery = std::make_shared<Surgery>();
+    std::shared_ptr<MedicalProcedure> checkUp = std::make_shared<CheckUp>();
+
+    
+    std::shared_ptr<Appointment> appointment = std::make_shared<ConcreteAppointment>(patient, doctor, "2023-10-15 10:00");
 
     try {
         
-        ConcreteAppointment appointment(&patient, &doctor, "10:00 AM");
-        appointment.schedule();
-
-        ConcreteAppointment anotherAppointment(&patient, &doctor, "10:00 AM");
-        anotherAppointment.schedule();  
-
+        appointment->schedule();
+        
+        
+        std::shared_ptr<Appointment> conflictingAppointment = std::make_shared<ConcreteAppointment>(patient, doctor, "2023-10-15 10:00");
+        conflictingAppointment->schedule();  
     } catch (const SchedulingConflictException& e) {
-        std::cout << "Error: " << e.what() << std::endl;
+        std::cout << e.what() << std::endl;
+    }
+
+    
+    surgery->perform();
+    patient->addProcedure("Heart Surgery");
+
+    checkUp->perform();
+    patient->addProcedure("Routine Check-Up");
+
+    
+    std::cout << "\nPatient's Medical History:" << std::endl;
+    for (const auto& procedure : *patient) {
+        std::cout << procedure << std::endl;
     }
 
     try {
         
-        surgery.perform();
-        patient.addProcedure("Surgery");
+        appointment->reschedule("2023-10-15 10:00");  
+    } catch (const SchedulingConflictException& e) {
+        std::cout << e.what() << std::endl;
+    }
 
+    try {
         
-        checkUp.perform();
-        patient.addProcedure("CheckUp");
-
-        
-        std::cout << "Patient's Medical History:" << std::endl;
-        for (const auto& procedure : patient) {
-            std::cout << "- " << procedure << std::endl;
-        }
-
+        appointment->cancel();
     } catch (const PatientNotFoundException& e) {
-        std::cout << "Error: " << e.what() << std::endl;
+        std::cout << e.what() << std::endl;
     }
 
     return 0;
